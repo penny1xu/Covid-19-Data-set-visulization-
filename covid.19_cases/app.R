@@ -160,6 +160,5 @@ server <- function(input, output, session) {
   output$cumulatedMetrics = renderBarPlot("Cum", legendPrefix="Cumulated", yaxisTitle="Cumulated Cases")
 }
 
-
 # Run the application
 shinyApp(ui = ui, server = server)
