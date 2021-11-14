@@ -8,7 +8,7 @@
 #
 ############################################
 # The Requirement For this Project
-# 
+#
 #
 #
 
@@ -20,61 +20,56 @@
 
 
 library(dplyr)
-library(tidyr)  
+library(tidyr)
 library(plotly)
 
 ##############################################
 ## Front-end
 ui <- fluidPage(
-  tags$style(
-    type='text/css', 
-    ".selectize-input { font-family: Arial, sans-serif; } .selectize-dropdown { font-family: Arial, sans-serif; }"
-  ),
-  tags$style(HTML(
-    "body { font-family: Arial, sans-serif; line-height: 1.1; }"
-  )),
-  
-  titlePanel("Case History of the Coronavirus (COVID-19) in the US"),
-  fluidRow(
-    column(
-      3, 
-      selectizeInput("country", label=h5("Country"), choices=NULL, width="100%")
-    ),
-    column(
-      3, 
-      selectizeInput("state", label=h5("States"), choices=NULL, width="100%")
-    ),
-    column(
-      3,
-      selectizeInput("county", label = h5("county"),choices=NULL, width="100%")
-    ),
-    column(
-      3, 
-      checkboxGroupInput(
-        "metrics", label=h5("Please Chose a Metrics"), 
-        choices=c("Confirmed", "Deaths"), 
-        selected=c("Confirmed", "Deaths"), width="100%")
-    )
-  ),
-  fluidRow(
-    column(
-      9,
-      plotlyOutput("dailyMetrics")
-    ),
-    column(
-      3,
-      dateRangeInput("Calander", "Calander")
-    )
-  ),
-  fluidRow(
-    column(
-      9,
-      plotlyOutput("cumulatedMetrics")
-    ),
-  ),
-  
-)
+        tags$style(
+            type='text/css',
+            ".selectize-input { font-family: Arial, sans-serif; } .selectize-dropdown { font-family: Arial, sans-serif; }"
+        ),
+        tags$style(HTML(
+            "body { font-family: Arial, sans-serif; line-height: 1.1; }"
+        )),
 
+        titlePanel("Case History of the Coronavirus (COVID-19) in the US"),
+        fluidRow(
+            column(
+                3,
+                selectizeInput("state", label=h5("States"), choices=NULL, width="100%")
+            ),
+            column(
+              3,
+              selectizeInput("county", label = h5("county"),choices=NULL, width="100%")
+            ),
+            column(
+                3,
+                checkboxGroupInput(
+                    "metrics", label=h5("Please Chose a Metrics"),
+                    choices=c("Confirmed", "Deaths"),
+                    selected=c("Confirmed", "Deaths"), width="100%")
+            )
+        ),
+        fluidRow(
+            column(
+                9,
+                plotlyOutput("dailyMetrics")
+            ),
+            column(
+                3,
+                dateRangeInput("Calander", "Calander")
+            )
+        ),
+        fluidRow(
+            column(
+                9,
+                plotlyOutput("cumulatedMetrics")
+            ),
+        ),
+
+)
 ###################################################
 
 ## Back-End
@@ -101,55 +96,55 @@ server <- function(input, output, session) {
     d = data %>%
       filter(state == input$state)
     if(input$county != "<all>") {
-      d = d %>% 
-        filter(county == input$county) 
+      d = d %>%
+        filter(county == input$county)
     } else {
-      d = d %>% 
-        group_by(date) %>% 
+      d = d %>%
+        group_by(date) %>%
         summarise_if(is.numeric, sum, na.rm=TRUE)
     }
-    
-    
+
+
     d %>%
       mutate(
-        dateStr = format(date, format="%b %d, %Y"), 
+        dateStr = format(date, format="%b %d, %Y"),
         NewDeaths= cumDeath - lag(cumDeath, default=0)
       )
   })
-  
+
   observeEvent(input$state, {
-    county = data %>% 
-      filter(county == input$county) %>% 
+    county = data %>%
+      filter(county == input$county) %>%
       pull(county)
     county = c("<all>", sort(unique(county)))
     updateSelectInput(session, "county", choices=county, selected=county[1])
   })
-  
+
   state = sort(unique(data$state))
-  
+
   updateSelectInput(session, "state", choices=state, selected="Texas")
-  
+
   renderBarPlot = function(varPrefix, legendPrefix, yaxisTitle) {
     renderPlotly({
       data = selectData()
-      plt = selectData %>% 
+      plt = selectData %>%
         plot_ly() %>%
         config(displayModeBar=FALSE) %>%
         layout(
-          barmode='group', 
+          barmode='group',
           xaxis=list(
-            title="", tickangle=-90, type='category', ticktext=as.list(data$date), 
-            gridwidth=1), 
+            title="", tickangle=-90, type='category', ticktext=as.list(data$date),
+            gridwidth=1),
           yaxis=list(
             title=yaxisTitle
           ),
           legend=list(x=0.05, y=0.95, font=list(size=15), bgcolor='rgba(240,240,240,0.5)'),
           font=f1
         )
-      for(metric in input$metrics) 
+      for(metric in input$metrics)
         plt = plt %>%
         add_trace(
-          x= ~date, y=data[[paste0(varPrefix, metric)]], type='bar', 
+          x= ~date, y=data[[paste0(varPrefix, metric)]], type='bar',
           name=paste(legendPrefix, metric, "Cases"),
           marker=list(
             color=switch(metric, Deaths='rgb(0,128,0)', Confirmed='rgb(100,140,240)'),
@@ -159,13 +154,11 @@ server <- function(input, output, session) {
       plt
     })
   }
-  
+
   output$dailyMetrics = renderBarPlot("New", legendPrefix="New", yaxisTitle="New Cases per Day")
   output$cumulatedMetrics = renderBarPlot("Cum", legendPrefix="Cumulated", yaxisTitle="Cumulated Cases")
 }
 
 
-# Run the application 
+# Run the application
 shinyApp(ui = ui, server = server)
-
-
