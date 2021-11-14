@@ -76,19 +76,20 @@ ui <- fluidPage(
 
 baseURL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-20/master/data_tables/JHU_USCountymap/df_Counties2020.csv"
 
-data <- read.csv(baseURL,check.names = FALSE,stringsAsFactors = FALSE)
+fontstyle = list(family="Arial, sans-serif", size=12, color="rgb(30,30,30)")
+
+alldata <- read.csv(baseURL,check.names = FALSE,stringsAsFactors = FALSE)
 
 #loadData = function(data){
 #  data = data %>%
 #    select(Countyname, ST_Name, FIPS, dt, Confirmed, Deaths, Population, NewCases )
 #}
 
-data$IncidenceRate <- NULL
-data$ST_ID <-NULL
+alldata$IncidenceRate <- NULL
+alldata$ST_ID <-NULL
+alldata$NewCases <-NULL
 
-colnames(data) <- c(" ", "county", "state", "FIPS", "date","cumConfirmed", "cumDeath", "population", "newCases")
-
-
+colnames(alldata) <- c(" ", "county", "state", "FIPS", "date","CumConfirmed", "CumDeaths", "population")
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
