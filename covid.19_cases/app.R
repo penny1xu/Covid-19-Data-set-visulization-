@@ -80,10 +80,6 @@ fontstyle = list(family="Arial, sans-serif", size=12, color="rgb(30,30,30)")
 
 alldata <- read.csv(baseURL,check.names = FALSE,stringsAsFactors = FALSE)
 
-#loadData = function(data){
-#  data = data %>%
-#    select(Countyname, ST_Name, FIPS, dt, Confirmed, Deaths, Population, NewCases )
-#}
 
 alldata$IncidenceRate <- NULL
 alldata$ST_ID <-NULL
@@ -93,9 +89,10 @@ colnames(alldata) <- c(" ", "county", "state", "FIPS", "date","CumConfirmed", "C
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
-  selectData = reactive({
-    d = data %>%
-      filter(state == input$state)
+  data = reactive({
+    d = alldata %>%
+      filter(state == input$state)%>%
+      filter(date >= input$Calander[1]& data <= input$Calander[2])
     if(input$county != "<all>") {
       d = d %>%
         filter(county == input$county)
@@ -105,30 +102,31 @@ server <- function(input, output, session) {
         summarise_if(is.numeric, sum, na.rm=TRUE)
     }
 
-
     d %>%
       mutate(
         dateStr = format(date, format="%b %d, %Y"),
+        Newconfirmed = CumConfirmed - lag(CumConfirmed, default = 0),
         NewDeaths= cumDeath - lag(cumDeath, default=0)
       )
+
   })
 
   observeEvent(input$state, {
-    county = data %>%
+    county = alldata %>%
       filter(county == input$county) %>%
       pull(county)
     county = c("<all>", sort(unique(county)))
     updateSelectInput(session, "county", choices=county, selected=county[1])
   })
 
-  state = sort(unique(data$state))
+  state = sort(unique(alldata$state))
 
   updateSelectInput(session, "state", choices=state, selected="Texas")
 
   renderBarPlot = function(varPrefix, legendPrefix, yaxisTitle) {
     renderPlotly({
-      data = selectData()
-      plt = selectData %>%
+      data = data()
+      plt = Data %>%
         plot_ly() %>%
         config(displayModeBar=FALSE) %>%
         layout(
@@ -140,8 +138,10 @@ server <- function(input, output, session) {
             title=yaxisTitle
           ),
           legend=list(x=0.05, y=0.95, font=list(size=15), bgcolor='rgba(240,240,240,0.5)'),
-          font=f1
+          font=fontstyle
+
         )
+        a <- data
       for(metric in input$metrics)
         plt = plt %>%
         add_trace(
