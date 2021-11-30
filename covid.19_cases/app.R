@@ -16,7 +16,6 @@ library(dplyr)
 library(tidyr)
 library(plotly)
 
-
 ##############################################
 ## Front-end
 ui <- fluidPage(
