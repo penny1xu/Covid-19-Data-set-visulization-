@@ -76,7 +76,6 @@ alldata <- read.csv(baseURL,check.names = FALSE,stringsAsFactors = FALSE)
 
 mydates <- as.Date(c("2020-12-25", "2020-09-12", "2020-05-23"))
 
-
 IMP <- read.csv("Covid19-imp.csv", check.names = FALSE, stringsAsFactors = FALSE)
 IMPdate = {}
 
